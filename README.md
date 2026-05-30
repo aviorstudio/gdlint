@@ -90,7 +90,7 @@ Use `-fix` carefully. It can remove code and files when static analysis believes
 
 ## Release
 
-Releases are created manually from GitHub Actions using a `vX.Y.Z` version input, for example `v0.0.1`.
+Releases are created manually from GitHub Actions using a `major`, `minor`, or `patch` dropdown. The workflow calculates the next `vX.Y.Z` tag from existing release tags. If no release tag exists, the first release is `v0.0.1`.
 
 The release workflow:
 
