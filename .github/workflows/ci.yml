@@ -1,0 +1,42 @@
+name: CI
+
+# Every pull request and every merge to main: test, on one runner.
+#
+# This repository had NO CI. release.yml was the only workflow, so nothing
+# checked a commit before it became a tag that other repositories download a
+# binary from -- fieldsofrevik's setup action pulls a gdlint release and puts it
+# on PATH.
+#
+# The push trigger is not redundant: there is no CD here, so nothing else covers
+# a merge to main.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    # Bounded, so a step that hangs fails here rather than sitting until the
+    # runner's own timeout hours later.
+    timeout-minutes: 20
+    steps:
+      # Third-party actions are pinned by SHA, with the tag in a trailing
+      # comment so the version is still readable.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        uses: ./.github/actions/test

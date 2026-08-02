@@ -24,7 +24,7 @@ func NewRemover(rootDir string) *Remover {
 
 func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 	filesToModify := make(map[string][]removalTask)
-	
+
 	for _, entity := range results.UnusedFunctions {
 		fullPath := filepath.Join(r.rootDir, entity.File)
 		filesToModify[fullPath] = append(filesToModify[fullPath], removalTask{
@@ -34,7 +34,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			name:      entity.Name,
 		})
 	}
-	
+
 	for _, entity := range results.UnusedSignals {
 		fullPath := filepath.Join(r.rootDir, entity.File)
 		filesToModify[fullPath] = append(filesToModify[fullPath], removalTask{
@@ -44,7 +44,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			name:      entity.Name,
 		})
 	}
-	
+
 	for _, entity := range results.UnusedConstants {
 		fullPath := filepath.Join(r.rootDir, entity.File)
 		filesToModify[fullPath] = append(filesToModify[fullPath], removalTask{
@@ -54,7 +54,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			name:      entity.Name,
 		})
 	}
-	
+
 	for _, entity := range results.UnusedEnums {
 		fullPath := filepath.Join(r.rootDir, entity.File)
 		endLine := r.findEnumEnd(fullPath, entity.Line)
@@ -65,7 +65,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			name:      entity.Name,
 		})
 	}
-	
+
 	for _, entity := range results.UnusedClassNames {
 		fullPath := filepath.Join(r.rootDir, entity.File)
 		filesToModify[fullPath] = append(filesToModify[fullPath], removalTask{
@@ -75,7 +75,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			name:      entity.Name,
 		})
 	}
-	
+
 	for _, location := range results.PrintStatements {
 		fullPath := filepath.Join(r.rootDir, location.File)
 		filesToModify[fullPath] = append(filesToModify[fullPath], removalTask{
@@ -84,7 +84,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			taskType:  "print",
 		})
 	}
-	
+
 	for _, location := range results.Comments {
 		fullPath := filepath.Join(r.rootDir, location.File)
 		filesToModify[fullPath] = append(filesToModify[fullPath], removalTask{
@@ -93,7 +93,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			taskType:  "comment",
 		})
 	}
-	
+
 	for _, location := range results.PassStatements {
 		fullPath := filepath.Join(r.rootDir, location.File)
 		filesToModify[fullPath] = append(filesToModify[fullPath], removalTask{
@@ -102,13 +102,13 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			taskType:  "pass",
 		})
 	}
-	
+
 	for filePath, tasks := range filesToModify {
 		if err := r.processFile(filePath, tasks); err != nil {
 			return fmt.Errorf("failed to process %s: %w", filePath, err)
 		}
 	}
-	
+
 	for _, unusedFile := range results.UnusedFiles {
 		fullPath := filepath.Join(r.rootDir, unusedFile)
 		fmt.Printf("Removing unused file: %s\n", unusedFile)
@@ -116,7 +116,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			return fmt.Errorf("failed to delete %s: %w", unusedFile, err)
 		}
 	}
-	
+
 	for _, orphanedUID := range results.OrphanedUIDs {
 		fullPath := filepath.Join(r.rootDir, orphanedUID)
 		fmt.Printf("Removing orphaned UID: %s\n", orphanedUID)
@@ -124,7 +124,7 @@ func (r *Remover) RemoveAll(results *models.AnalysisResults) error {
 			return fmt.Errorf("failed to delete %s: %w", orphanedUID, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -140,21 +140,21 @@ func (r *Remover) processFile(filePath string, tasks []removalTask) error {
 	if err != nil {
 		return err
 	}
-	
+
 	lines := strings.Split(content, "\n")
-	
+
 	sort.Slice(tasks, func(i, j int) bool {
 		return tasks[i].startLine > tasks[j].startLine
 	})
-	
+
 	for _, task := range tasks {
 		lines = r.removeLines(lines, task)
 	}
-	
+
 	newContent := strings.Join(lines, "\n")
-	
+
 	cleanContent := r.cleanupEmptyLines(newContent)
-	
+
 	return r.fileOps.WriteFile(filePath, cleanContent)
 }
 
@@ -162,13 +162,13 @@ func (r *Remover) removeLines(lines []string, task removalTask) []string {
 	if task.startLine <= 0 || task.startLine > len(lines) {
 		return lines
 	}
-	
+
 	startIdx := task.startLine - 1
 	endIdx := task.endLine
 	if endIdx > len(lines) {
 		endIdx = len(lines)
 	}
-	
+
 	switch task.taskType {
 	case "function":
 		return r.removeFunction(lines, startIdx, endIdx)
@@ -196,20 +196,20 @@ func (r *Remover) removeFunction(lines []string, startIdx, endIdx int) []string 
 			break
 		}
 	}
-	
+
 	needsPass := r.checkNeedsPass(lines, startIdx, endIdx)
-	
+
 	if needsPass {
 		indent := patterns.ExtractIndentation(lines[startIdx])
 		replacement := indent + "pass"
-		
+
 		newLines := make([]string, 0, len(lines)-((endIdx-1)-startIdx))
 		newLines = append(newLines, lines[:startIdx]...)
 		newLines = append(newLines, replacement)
 		newLines = append(newLines, lines[endIdx:]...)
 		return newLines
 	}
-	
+
 	newLines := make([]string, 0, len(lines)-(endIdx-startIdx))
 	newLines = append(newLines, lines[:startIdx]...)
 	newLines = append(newLines, lines[endIdx:]...)
@@ -220,7 +220,7 @@ func (r *Remover) removeSingleLine(lines []string, idx int) []string {
 	if idx < 0 || idx >= len(lines) {
 		return lines
 	}
-	
+
 	newLines := make([]string, 0, len(lines)-1)
 	newLines = append(newLines, lines[:idx]...)
 	newLines = append(newLines, lines[idx+1:]...)
@@ -230,7 +230,7 @@ func (r *Remover) removeSingleLine(lines []string, idx int) []string {
 func (r *Remover) removeEnum(lines []string, startIdx int) []string {
 	endIdx := startIdx + 1
 	braceCount := 1
-	
+
 	for i := startIdx + 1; i < len(lines); i++ {
 		line := lines[i]
 		if strings.Contains(line, "{") {
@@ -244,7 +244,7 @@ func (r *Remover) removeEnum(lines []string, startIdx int) []string {
 			}
 		}
 	}
-	
+
 	newLines := make([]string, 0, len(lines)-(endIdx-startIdx))
 	newLines = append(newLines, lines[:startIdx]...)
 	newLines = append(newLines, lines[endIdx:]...)
@@ -295,16 +295,16 @@ func (r *Remover) removePrintStatement(lines []string, idx int) []string {
 
 func (r *Remover) removeComment(lines []string, idx int) []string {
 	line := lines[idx]
-	
+
 	if patterns.CommentPattern.MatchString(strings.TrimSpace(line)) {
 		return r.removeSingleLine(lines, idx)
 	}
-	
+
 	newLine := patterns.RemoveComments(line)
 	if strings.TrimSpace(newLine) == "" {
 		return r.removeSingleLine(lines, idx)
 	}
-	
+
 	lines[idx] = newLine
 	return lines
 }
@@ -317,40 +317,40 @@ func (r *Remover) checkNeedsPass(lines []string, startIdx, endIdx int) bool {
 	if startIdx == 0 {
 		return false
 	}
-	
+
 	for i := startIdx - 1; i >= 0; i-- {
 		line := lines[i]
 		if patterns.IsEmptyOrComment(line) {
 			continue
 		}
-		
+
 		trimmed := strings.TrimSpace(line)
 		if strings.HasSuffix(trimmed, ":") {
 			hasOtherContent := false
 			baseIndent := patterns.CountIndentLevel(patterns.ExtractIndentation(line))
-			
+
 			for j := endIdx; j < len(lines); j++ {
 				checkLine := lines[j]
 				if patterns.IsEmptyOrComment(checkLine) {
 					continue
 				}
-				
+
 				checkIndent := patterns.CountIndentLevel(patterns.ExtractIndentation(checkLine))
 				if checkIndent <= baseIndent {
 					break
 				}
-				if checkIndent == baseIndent + 1 {
+				if checkIndent == baseIndent+1 {
 					hasOtherContent = true
 					break
 				}
 			}
-			
+
 			return !hasOtherContent
 		}
-		
+
 		break
 	}
-	
+
 	return false
 }
 
@@ -359,20 +359,20 @@ func (r *Remover) findEnumEnd(filePath string, startLine int) int {
 	if err != nil {
 		return startLine
 	}
-	
+
 	lines := strings.Split(content, "\n")
 	braceCount := 0
 	foundStart := false
-	
+
 	for i := startLine - 1; i < len(lines); i++ {
 		line := lines[i]
-		
+
 		if !foundStart && strings.Contains(line, "{") {
 			foundStart = true
 			braceCount = 1
 			continue
 		}
-		
+
 		if foundStart {
 			if strings.Contains(line, "{") {
 				braceCount++
@@ -385,14 +385,14 @@ func (r *Remover) findEnumEnd(filePath string, startLine int) int {
 			}
 		}
 	}
-	
+
 	return len(lines)
 }
 
 func (r *Remover) cleanupEmptyLines(content string) string {
 	lines := strings.Split(content, "\n")
 	cleaned := make([]string, 0, len(lines))
-	
+
 	emptyCount := 0
 	for _, line := range lines {
 		if strings.TrimSpace(line) == "" {
@@ -405,10 +405,10 @@ func (r *Remover) cleanupEmptyLines(content string) string {
 			cleaned = append(cleaned, line)
 		}
 	}
-	
+
 	for len(cleaned) > 0 && strings.TrimSpace(cleaned[len(cleaned)-1]) == "" {
 		cleaned = cleaned[:len(cleaned)-1]
 	}
-	
+
 	return strings.Join(cleaned, "\n")
 }
