@@ -1,0 +1,43 @@
+name: Test
+description: >
+  Is this commit good. Nothing is built for release here and nothing is
+  published; a failure means the code is wrong, not that the pipeline is.
+
+  A composite action rather than a reusable workflow so it runs in the caller's
+  job, under the caller's name -- CI / Test, Release / Test -- rather than as a
+  nested "caller / callee" check.
+
+  ONE definition, called by CI and by Release both. This repository had no CI at
+  all: release.yml was the only workflow, so nothing checked a commit before it
+  became a tag other repositories download a binary from.
+
+  Assumes Go is already set up; the caller does that, because the toolchain
+  version is a property of the job rather than of this step.
+
+runs:
+  using: composite
+  steps:
+    - name: Go formatting
+      shell: bash
+      run: |
+        unformatted="$(gofmt -l .)"
+        if [ -n "$unformatted" ]; then
+          echo "::error::these files need gofmt:"
+          echo "$unformatted"
+          exit 1
+        fi
+
+    - name: Go vet
+      shell: bash
+      run: go vet ./...
+
+    # There are no _test.go files today, so this reports "no test files" and
+    # passes. It is here rather than omitted so that the first test written is
+    # run by CI the moment it lands, without anyone remembering to wire it up.
+    - name: Go tests
+      shell: bash
+      run: go test ./...
+
+    - name: Go build
+      shell: bash
+      run: go build ./...
