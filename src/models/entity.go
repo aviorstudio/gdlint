@@ -1,6 +1,9 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/aviorstudio/gdlint/src/patterns"
+)
 
 type EntityType string
 
@@ -49,19 +52,7 @@ func (e *Entity) IsProtected() bool {
 		return false
 	}
 
-	protectedPrefixes := []string{
-		"_ready", "_init", "_enter_tree", "_exit_tree",
-		"_process", "_physics_process", "_input", "_unhandled_input",
-		"_draw", "_gui_input", "_notification",
-	}
-
-	for _, prefix := range protectedPrefixes {
-		if e.Name == prefix {
-			return true
-		}
-	}
-
-	if len(e.Name) >= 4 && e.Name[:4] == "_on_" {
+	if patterns.IsProtectedFunction(e.Name) {
 		return true
 	}
 
