@@ -13,7 +13,9 @@ go install github.com/aviorstudio/gdlint@latest
 For local development in this repository:
 
 ```bash
-go build -o bin/gdlint
+make install
+make check
+make build
 ```
 
 ## Usage
