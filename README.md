@@ -1,6 +1,6 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: b6967083c379daafaedb0c98745da29f86c61950cf31a92c63f59c99e3d85035 -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 4b1f6e696df2fac024354e9f57fe0a4f39cb19725958490d00435acf68c654c3 -->
 
-# GDLint
+# gdlint
 
 `gdlint` is a project-local GDScript hygiene checker for Godot projects.
 
@@ -86,7 +86,7 @@ Use `-fix` carefully. It can remove code and files when static analysis believes
 
 ## Development
 
-Install the [Komizo release](https://github.com/nicodes/komizo#install) matching `komizo.lock`.
+Install the [komizo release](https://github.com/nicodes/komizo#install) matching `komizo.lock`.
 
 ```sh
 komizo check        # Complete project checks
