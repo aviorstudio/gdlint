@@ -1,3 +1,5 @@
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: b6967083c379daafaedb0c98745da29f86c61950cf31a92c63f59c99e3d85035 -->
+
 # GDLint
 
 `gdlint` is a project-local GDScript hygiene checker for Godot projects.
@@ -8,14 +10,6 @@ It is intentionally not an architecture checker. It does not know about workspac
 
 ```bash
 go install github.com/aviorstudio/gdlint@latest
-```
-
-For local development in this repository:
-
-```bash
-make install
-make check
-make build
 ```
 
 ## Usage
@@ -90,16 +84,12 @@ gdlint -fix
 
 Use `-fix` carefully. It can remove code and files when static analysis believes they are unused.
 
-## Release
+## Development
 
-Releases are created manually from GitHub Actions using a `major`, `minor`, or `patch` dropdown. The workflow calculates the next `vX.Y.Z` tag from existing release tags. If no release tag exists, the first release is `v0.0.1`.
+Install the [Komizo release](https://github.com/nicodes/komizo#install) matching `komizo.lock`.
 
-The release workflow:
-
-- runs `go test ./...`
-- builds Linux, macOS, and Windows binaries for `amd64` and `arm64`
-- injects version, commit, and build date into `gdlint version`
-- packages archives with this README
-- generates `checksums.txt`
-- creates and pushes the git tag
-- publishes a GitHub release
+```sh
+komizo check        # Complete project checks
+komizo run build    # Build the declared distributable artifacts
+komizo describe     # Inspect tools and focused stages
+```

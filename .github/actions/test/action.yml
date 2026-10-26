@@ -1,8 +1,0 @@
-name: Test
-description: Verify source, CLI behavior and the six release archives through the caller-owned Make profile; publication remains a separate workflow step.
-runs:
-  using: composite
-  steps:
-    - name: Verify the Go CLI profile
-      shell: bash
-      run: make check
