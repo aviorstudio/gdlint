@@ -1,4 +1,4 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 87a8f8ec8e3c2fdbdd3e8919868272bc54c772514f11de1ea28d5164dbf3ca38 -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: f36081fdcaa1266b1c4f7f68c0a2748fc6cb99cb3a6e7c543078fc3cfdf01243 -->
 
 # gdlint
 
@@ -8,19 +8,21 @@ It is intentionally not an architecture checker. It does not know about workspac
 
 ## Install
 
-Linux and macOS:
+Linux and macOS (x86_64 or arm64), using prebuilt binaries:
+
+With curl:
 
 ```sh
 curl -fsSL https://gdlint.dev/install | sh
 ```
 
-The installer verifies the release checksum and installs to `~/.local/bin`. A Go compiler is not needed. Add that directory to your PATH if necessary. Use `sh -s -- --install-dir /absolute/path` to select another directory.
-
-With the Go toolchain, the source alternative is:
+Or with mise:
 
 ```sh
-go install github.com/aviorstudio/gdlint@latest
+mise use --global github:aviorstudio/gdlint@latest
 ```
+
+The shell installer verifies the release checksum and installs to `~/.local/bin`. Add that directory to your PATH if necessary. Mise manages its own installation directory and PATH through its shell activation.
 
 ## Usage
 
