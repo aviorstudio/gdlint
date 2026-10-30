@@ -1,4 +1,4 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: d1708f0907434fc9e82be904996faa017df8385ea0c972cc75eadbd3fe6568e0 -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 7e5614edff8a61403c29c883292a016ed1b13607850f1af0d723448156819a4d -->
 
 # gdlint
 
@@ -95,3 +95,16 @@ gdlint -fix
 ```
 
 Use `-fix` carefully. It can remove code and files when static analysis believes they are unused.
+
+## Contributor verification
+
+Tool versions and native tasks live in `mise.toml`. Prepare the pinned helper source and run the complete gate:
+
+```sh
+git clone https://github.com/nicodes/tools.git .ci-tools
+git -C .ci-tools checkout --detach 091101094fedf5ce2e67c339c1c9c842d6a662dc
+mise install
+mise run check
+```
+
+Native build and test commands retain source and output checks, with receipts in `.artifacts/verification`. Existing product release rules and artifacts remain owned by this repository. End users install the product’s published distribution.
