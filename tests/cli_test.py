@@ -20,7 +20,7 @@ class Project(unittest.TestCase):
     def put(self,name,text):
         path=self.root/name
         path.parent.mkdir(parents=True,exist_ok=True)
-        path.write_text(text)
+        path.write_bytes(text.encode('utf-8'))
         return path
     def config(self,errors=None,warnings=None,settings=None):
         config={}
@@ -31,8 +31,8 @@ class Project(unittest.TestCase):
         if settings is not None: config['settings']=settings
         self.put('gdlint.json',json.dumps(config))
     def cli(self,*args,code=None):
-        result=subprocess.run([str(BINARY),*args],cwd=self.root,capture_output=True,text=True,timeout=15)
-        result.stdout=ANSI.sub('',result.stdout)
+        result=subprocess.run([str(BINARY),*args],cwd=self.root,capture_output=True,text=True,encoding='utf-8',timeout=15)
+        result.stdout=ANSI.sub('',result.stdout).replace(os.sep,'/')
         if code is not None: self.assertEqual(result.returncode,code,result.stdout+result.stderr)
         return result
 
@@ -104,7 +104,7 @@ class CLI(Project):
         self.assertNotIn('• global.gd',output)
         self.assertNotIn('• class.gd',output)
     def test_ignore_patterns_have_separate_general_unused_and_variant_scopes(self):
-        self.config(dict(unused_functions=True,variant_usage=True,print_statements=True),settings=dict(ignore_patterns=['skip*.gd'],unused_ignore_patterns=['unused/'],variant_ignore_patterns=['variant/']))
+        self.config(dict(unused_functions=True,variant_usage=True,print_statements=True),settings=dict(ignore_patterns=['skip*.gd'],unused_ignore_patterns=['unused'+os.sep],variant_ignore_patterns=['variant'+os.sep]))
         for index,name in enumerate(['skip-me.gd','unused/a.gd','variant/a.gd','active.gd']):
             self.put(name,f'class_name Example{index}\nfunc helper{index}(value: Variant):\n\tprint(value)\n')
         output=self.cli(code=1).stdout
