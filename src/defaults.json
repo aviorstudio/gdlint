@@ -1,0 +1,34 @@
+{
+  "errors": {
+    "unused_functions": false,
+    "unused_signals": false,
+    "unused_constants": false,
+    "unused_enums": false,
+    "unused_class_names": false,
+    "unused_files": false,
+    "print_statements": true,
+    "comments": false,
+    "pass_statements": true,
+    "orphaned_uids": true,
+    "indentation": true,
+    "has_method": false,
+    "variant_usage": false,
+    "missing_return_types": false
+  },
+  "warnings": {
+    "single_use_functions": false,
+    "empty_functions": false
+  },
+  "settings": {
+    "allowed_comment_prefixes": [
+      "[TECH DEBT]"
+    ],
+    "ignore_patterns": [
+      "*.tmp",
+      "*.backup",
+      ".import/"
+    ],
+    "unused_ignore_patterns": [],
+    "variant_ignore_patterns": []
+  }
+}
