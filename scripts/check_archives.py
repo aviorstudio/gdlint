@@ -1,4 +1,4 @@
-"""Validate the exact six archives and checksums the release publishes."""
+"""Validate native archives, checksums and embedded source identity."""
 import argparse
 import hashlib
 from pathlib import Path
@@ -41,9 +41,11 @@ def main():
     parser.add_argument('--record', action='store_true')
     args = parser.parse_args()
     expected = {f'gdlint_{system}_{arch}.{extension}' for system, arch, extension in MATRIX}
+    if not os.environ.get('NATIVE_CLI_ARCHIVES'):
+        expected = {host_archive().name}
     actual = {p.name for p in Path('dist').glob('*') if p.name.endswith(('.tar.gz', '.zip'))}
     if actual != expected:
-        raise ValueError('release must contain exactly all six supported archives')
+        raise ValueError('release must contain exactly the expected native archives')
     checksums = ''.join(hashlib.sha256((Path('dist') / name).read_bytes()).hexdigest()+'  '+name+'\n' for name in sorted(expected))
     manifest = Path('dist/checksums.txt')
     if args.record:
@@ -58,10 +60,15 @@ def main():
         binary = extract(host_archive(), directory)
         version = subprocess.check_output([binary, 'version'], text=True, timeout=10).strip()
         wanted = os.environ.get('VERSION', 'dev')
-        if not version.startswith(f'gdlint {wanted} ('):
+        revision = os.environ.get('COMMIT') or subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+        date = os.environ.get('DATE','unknown')
+        if version != f'gdlint {wanted} ({revision}, {date})':
             raise ValueError('archived binary version differs from the requested release')
         print(version)
-    print('All six archives and their checksums verified')
+    print(f'{len(expected)} native archives, checksums and source identity verified')
+    with tempfile.TemporaryDirectory() as directory:
+        binary = extract(host_archive(), directory).resolve()
+        subprocess.run(['python3','tests/cli_test.py'],env=dict(os.environ,GDLINT_TEST_BINARY=str(binary)),check=True)
 
 
 if __name__ == '__main__':

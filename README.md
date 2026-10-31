@@ -1,4 +1,4 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 7e5614edff8a61403c29c883292a016ed1b13607850f1af0d723448156819a4d -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 25786f7766e91bcd842f704cc237bcdc80248cae5a380dedceea17a76c7350f2 -->
 
 # gdlint
 
@@ -94,7 +94,16 @@ gdlint version
 gdlint -fix
 ```
 
-Use `-fix` carefully. It can remove code and files when static analysis believes they are unused.
+Use `-fix` carefully. It can remove code and files when static analysis believes they are unused. The fixer refuses symlinked files and checks removal ranges before writing. Rules without an automatic fix remain reported after the existing ten-iteration limit.
+
+## Build from source
+
+The CLI is implemented in Rust. With Rust 1.94.0 installed, run:
+
+```sh
+cargo build --release --locked
+./target/release/gdlint version
+```
 
 ## Contributor verification
 
