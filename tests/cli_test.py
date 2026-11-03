@@ -32,7 +32,8 @@ class Project(unittest.TestCase):
         self.put('gdlint.json',json.dumps(config))
     def cli(self,*args,code=None):
         result=subprocess.run([str(BINARY),*args],cwd=self.root,capture_output=True,text=True,encoding='utf-8',timeout=15)
-        result.stdout=ANSI.sub('',result.stdout).replace(os.sep,'/')
+        if '--json' not in args:
+            result.stdout=ANSI.sub('',result.stdout).replace(os.sep,'/')
         if code is not None: self.assertEqual(result.returncode,code,result.stdout+result.stderr)
         return result
 
@@ -53,6 +54,25 @@ class CLI(Project):
         self.assertEqual(config,(self.root/'gdlint.json').read_bytes())
         self.assertIn('unknown command',self.cli('unknown',code=1).stderr)
         self.assertIn('expected at most one command',self.cli('init','version',code=1).stderr)
+    def test_json_results_have_findings_and_no_terminal_text(self):
+        self.config(dict(print_statements=True))
+        self.put('main.gd','func _ready():\n\tprint("fixture")\n')
+        response=self.cli('--json',code=1)
+        self.assertNotIn('\x1b',response.stdout)
+        value=json.loads(response.stdout)
+        self.assertFalse(value['ok'])
+        self.assertEqual(value['result']['errors'],1)
+        self.assertEqual(value['result']['findings'][0]['file'],'main.gd')
+        self.assertTrue(json.loads(self.cli('--json','-fix',code=0).stdout)['ok'])
+        self.assertNotIn('print(', (self.root/'main.gd').read_text())
+        self.assertEqual(json.loads(self.cli('--json','-unknown',code=2).stdout)['error']['code'],'invalid_usage')
+    def test_explicit_config_override_and_machine_version_do_not_need_user_config(self):
+        self.put('custom.json',json.dumps({'errors':{'print_statements':False}}))
+        self.put('main.gd','func _ready():\n\tprint("fixture")\n')
+        self.assertTrue(json.loads(self.cli('--json','--config','custom.json',code=0).stdout)['ok'])
+        (self.root/'project.godot').unlink()
+        self.assertIn('version',json.loads(self.cli('--json','version',code=0).stdout)['result'])
+
     def test_defaults_find_print_indent_and_orphan_but_preserve_optional_rules(self):
         self.put('one.gd','# ordinary comment\nclass_name One\nsignal unused\nfunc helper():\n    print("hello")\n')
         self.put('missing.gd.uid','uid://orphan')
@@ -181,7 +201,7 @@ class CLI(Project):
         self.config(dict(has_method=True))
         script=self.put('unhandled.gd','func _ready():\n\thas_method("work")\n')
         original=script.read_bytes()
-        result=self.cli('-fix',code=0)
+        result=self.cli('-fix',code=1)
         self.assertEqual(result.stdout.count('=== Fix iteration'),10)
         self.assertIn('Reached maximum iterations (10)',result.stderr)
         self.assertEqual(script.read_bytes(),original)

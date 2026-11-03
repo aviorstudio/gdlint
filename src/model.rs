@@ -20,15 +20,18 @@ pub struct Settings {
     pub variant_ignore_patterns: Vec<String>,
 }
 impl Config {
-    pub fn load(root: &Path) -> Result<Self> {
+    pub fn load(root: &Path, path: Option<&Path>) -> Result<Self> {
         let mut value: Value = serde_json::from_str(DEFAULTS)?;
-        match std::fs::read(root.join("gdlint.json")) {
+        match std::fs::read(
+            path.map(Path::to_path_buf)
+                .unwrap_or_else(|| root.join("gdlint.json")),
+        ) {
             Ok(bytes) => {
                 let supplied: Value = serde_json::from_slice(&bytes)
                     .map_err(|e| format!("invalid config file: {e}"))?;
                 merge(&mut value, supplied).map_err(|e| format!("invalid config file: {e}"))?;
             }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound && path.is_none() => {}
             Err(e) => return Err(e.into()),
         }
         Ok(serde_json::from_value(value).map_err(|e| format!("invalid config file: {e}"))?)
