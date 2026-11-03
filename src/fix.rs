@@ -92,7 +92,7 @@ fn safe_path(root: &Path, name: &str) -> Result<std::path::PathBuf> {
     }
     Ok(path)
 }
-pub fn remove(root: &Path, results: &Findings) -> Result<()> {
+pub fn remove(root: &Path, results: &Findings, quiet: bool) -> Result<()> {
     let mut files: BTreeMap<String, Vec<Task>> = BTreeMap::new();
     for category in [0, 1, 2, 3, 5, 7, 8, 9] {
         for finding in &results.items[category] {
@@ -177,14 +177,16 @@ pub fn remove(root: &Path, results: &Findings) -> Result<()> {
         fs::write(path, content)?;
     }
     for (path, category, name) in deletions {
-        println!(
-            "Removing {}: {name}",
-            if category == 6 {
-                "unused file"
-            } else {
-                "orphaned UID"
-            }
-        );
+        if !quiet {
+            println!(
+                "Removing {}: {name}",
+                if category == 6 {
+                    "unused file"
+                } else {
+                    "orphaned UID"
+                }
+            );
+        }
         if fs::symlink_metadata(&path)?.is_dir() {
             fs::remove_dir(path)?;
         } else {

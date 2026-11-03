@@ -1,4 +1,4 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 25786f7766e91bcd842f704cc237bcdc80248cae5a380dedceea17a76c7350f2 -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: bca842ddc8f3812eccc4776e12b6e1803bb60cf7aa63ce9f259a2428f0e004a3 -->
 
 # gdlint
 
@@ -117,3 +117,13 @@ mise run check
 ```
 
 Native build and test commands retain source and output checks, with receipts in `.artifacts/verification`. Existing product release rules and artifacts remain owned by this repository. End users install the product’s published distribution.
+
+## Contributor task interface
+
+Contributor tool versions and task entry points live in the native Mise configuration. Use `mise run lint` for source checks, `mise run test` for the applicable behavioral tests, and `mise run check` for the complete supported gate. `mise run clean` removes declared generated outputs while preserving source, credentials and retained data. This package has no separate Mise development service; use its native entry points directly.
+
+## Machine results and configuration
+
+Use `gdlint --json` for structured findings, `gdlint --json -fix` for a verified fix result, and `gdlint --json version` for build identity. Machine stdout contains one JSON document without terminal control bytes. Diagnostics use stderr. Errors in the project and unresolved fixes exit 1; invalid command syntax exits 2; help/version succeed.
+
+Configuration defaults to `gdlint.json` in the Godot project root. `--config FILE` selects an explicit file; an explicitly missing file fails. Project settings stay with the project rather than user-global configuration.

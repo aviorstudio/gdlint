@@ -528,7 +528,7 @@ pub fn analyze(root: &Path, config: &Config) -> Result<Findings> {
     Ok(results)
 }
 
-pub fn debt(root: &Path) -> Result<()> {
+pub fn debt_findings(root: &Path) -> Result<Vec<(String, usize, String)>> {
     let mut comments = Vec::new();
     for path in walk(root)? {
         if path.to_string_lossy().ends_with(".gd") && !fs::symlink_metadata(&path)?.is_dir() {
@@ -544,6 +544,10 @@ pub fn debt(root: &Path) -> Result<()> {
             }
         }
     }
+    Ok(comments)
+}
+pub fn debt(root: &Path) -> Result<()> {
+    let comments = debt_findings(root)?;
     if comments.is_empty() {
         println!("No [TECH DEBT] comments found");
     } else {
