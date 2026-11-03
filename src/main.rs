@@ -39,6 +39,10 @@ fn options() -> Result<Option<Options>> {
         if flags && argument.starts_with('-') && argument != "-" {
             let argument = argument.trim_start_matches('-');
             let (key, value) = argument.split_once('=').unwrap_or((argument, "true"));
+            if key == "version" && value == "true" {
+                commands.push("version".into());
+                continue;
+            }
             if key == "h" || key == "help" {
                 if options.json {
                     println!(

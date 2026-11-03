@@ -52,7 +52,7 @@ class CLI(Project):
         self.assertEqual(config,(Path(__file__).parents[1]/'src/defaults.json').read_bytes())
         self.assertIn('config already exists',self.cli('init',code=1).stderr)
         self.assertEqual(config,(self.root/'gdlint.json').read_bytes())
-        self.assertIn('unknown command',self.cli('unknown',code=1).stderr)
+        self.assertIn('unknown command',self.cli('unknown',code=2).stderr)
         self.assertIn('expected at most one command',self.cli('init','version',code=1).stderr)
     def test_json_results_have_findings_and_no_terminal_text(self):
         self.config(dict(print_statements=True))
@@ -71,7 +71,8 @@ class CLI(Project):
         self.put('main.gd','func _ready():\n\tprint("fixture")\n')
         self.assertTrue(json.loads(self.cli('--json','--config','custom.json',code=0).stdout)['ok'])
         (self.root/'project.godot').unlink()
-        self.assertIn('version',json.loads(self.cli('--json','version',code=0).stdout)['result'])
+        for version in ['version','--version']:
+            self.assertIn('version',json.loads(self.cli('--json',version,code=0).stdout)['result'])
 
     def test_defaults_find_print_indent_and_orphan_but_preserve_optional_rules(self):
         self.put('one.gd','# ordinary comment\nclass_name One\nsignal unused\nfunc helper():\n    print("hello")\n')
