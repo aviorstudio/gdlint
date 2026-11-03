@@ -53,7 +53,7 @@ class CLI(Project):
         self.assertIn('config already exists',self.cli('init',code=1).stderr)
         self.assertEqual(config,(self.root/'gdlint.json').read_bytes())
         self.assertIn('unknown command',self.cli('unknown',code=2).stderr)
-        self.assertIn('expected at most one command',self.cli('init','version',code=1).stderr)
+        self.assertIn('expected at most one command',self.cli('init','version',code=2).stderr)
     def test_json_results_have_findings_and_no_terminal_text(self):
         self.config(dict(print_statements=True))
         self.put('main.gd','func _ready():\n\tprint("fixture")\n')
