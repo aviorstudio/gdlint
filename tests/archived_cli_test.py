@@ -4,7 +4,11 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from check_archives import extract, host_archive
+import os, sys, tomllib
+sys.path.insert(0, str(Path(os.environ['TOOLS_ROOT']) / 'helpers'))
+import native_cli
+package = tomllib.loads(Path('cookbook.toml').read_text())['package']
+record = native_cli.native_target(package)
 
 
 def run(binary, root, args, success=True, message=None):
@@ -17,7 +21,7 @@ def run(binary, root, args, success=True, message=None):
 
 with tempfile.TemporaryDirectory() as directory:
     root = Path(directory)
-    binary = extract(host_archive().resolve(), root / 'binary')
+    binary = native_cli.inspect_archive(Path('dist') / native_cli.archive_name(package, record), package, record, root / 'binary')
     project = root / 'project'
     project.mkdir()
     run(binary, project, ['version'], message='gdlint ')
