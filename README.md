@@ -1,4 +1,4 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: bca842ddc8f3812eccc4776e12b6e1803bb60cf7aa63ce9f259a2428f0e004a3 -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 1b696ec8337ddabe32c7831bee500c4c381d0740a623eceeff234f0ea8118bc3 -->
 
 # gdlint
 
@@ -98,29 +98,30 @@ Use `-fix` carefully. It can remove code and files when static analysis believes
 
 ## Build from source
 
-The CLI is implemented in Rust. With Rust 1.94.0 installed, run:
+The CLI is implemented in Rust. Prepare the pinned toolchain and build its verified native executable:
 
 ```sh
-cargo build --release --locked
-./target/release/gdlint version
+make setup
+make build
+.artifacts/build/gdlint version
 ```
 
 ## Contributor verification
 
-Tool versions and native tasks live in `mise.toml`. Prepare the pinned helper source and run the complete gate:
+`mise.toml` pins contributor SDKs. The generated root Makefile selects an immutable revision of the shared cookbook and binds it to `cookbook.toml`.
 
 ```sh
-git clone https://github.com/nicodes/tools.git .ci-tools
-git -C .ci-tools checkout --detach 091101094fedf5ce2e67c339c1c9c842d6a662dc
-mise install
-mise run check
+make help
+make setup
+make build
+make test
 ```
 
-Native build and test commands retain source and output checks, with receipts in `.artifacts/verification`. Existing product release rules and artifacts remain owned by this repository. End users install the product’s published distribution.
+`make help` works offline before setup. `make setup` explicitly prepares the pinned SDKs, locked dependencies and declared fixtures. `make build` compiles the executable, packages the native archive and verifies its source and output identity. `make test` runs lint, deterministic native unit tests, security checks and the declared integration journeys against those verified artifacts. Run build again after changing source; tests do not install tools or build missing shipping artifacts.
 
-## Contributor task interface
+Use `make fmt` to apply formatting, `make test:lint`, `make test:unit`, `make test:security` or `make test:integration` to select a group, and `make clean` to remove the declared generated outputs. Build and test evidence is recorded in `.artifacts/verification`.
 
-Contributor tool versions and task entry points live in the native Mise configuration. Use `mise run lint` for source checks, `mise run test` for the applicable behavioral tests, and `mise run check` for the complete supported gate. `mise run clean` removes declared generated outputs while preserving source, credentials and retained data. This package has no separate Mise development service; use its native entry points directly.
+The verified executable is `.artifacts/build/gdlint` (`gdlint.exe` on Windows). CI retains Linux, macOS and Windows builds for both x86_64 and arm64. Published Linux binaries use musl, and Windows binaries include the C runtime. Release archives retain their existing contents, checksums and source-workflow build provenance. Integration journeys exercise native CLI behavior, archived binaries and the installer.
 
 ## Machine results and configuration
 
