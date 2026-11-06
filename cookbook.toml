@@ -9,9 +9,6 @@ profile = "release"
 
 [package]
 binary = "gdlint"
-component = "cli"
-output = ".artifacts/build/gdlint"
-profile = "release"
 files = ["README.md"]
 version_arguments = ["version"]
 version_template = "{binary} {version} ({commit}, {date})"
@@ -70,12 +67,6 @@ platform = "Windows"
 arch = "arm64"
 extension = "zip"
 checks = []
-
-[artifacts]
-paths = ["dist", ".artifacts/build", ".artifacts/native-package"]
-
-[artifacts.binary_environment]
-GDLINT_TEST_BINARY = ".artifacts/build/gdlint"
 
 [lint]
 shell_paths = ["install.sh"]
