@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-BINARY=Path(os.environ.get('GDLINT_TEST_BINARY',str(Path(os.environ.get('CARGO_TARGET_DIR','target'))/'debug'/('gdlint.exe' if os.name=='nt' else 'gdlint')))).resolve()
+BINARY=Path(os.environ.get('COOKBOOK_CLI_BINARY',str(Path(os.environ.get('CARGO_TARGET_DIR','target'))/'debug'/('gdlint.exe' if os.name=='nt' else 'gdlint')))).resolve()
 ANSI=re.compile(r'\x1b\[[0-9;]*m')
 
 
