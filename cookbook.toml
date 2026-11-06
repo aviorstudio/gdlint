@@ -73,8 +73,6 @@ checks = []
 
 [artifacts]
 paths = ["dist", ".artifacts/build", ".artifacts/native-package"]
-environment = ["VERSION", "COMMIT", "DATE", "RUST_TARGET"]
-revision_environment = ["COMMIT"]
 
 [artifacts.binary_environment]
 GDLINT_TEST_BINARY = ".artifacts/build/gdlint"
@@ -84,22 +82,15 @@ shell_paths = ["install.sh"]
 
 [[tests.integration]]
 runner = "python"
-path = "tests/cli_test.py"
-
-[[tests.integration]]
-runner = "python"
-path = "tests/installer_test.py"
-
-[[tests.integration]]
-runner = "python"
-path = "tests/archived_cli_test.py"
+cases = [
+  {path="tests/cli_test.py"},
+  {path="tests/installer_test.py"},
+  {path="tests/archived_cli_test.py"},
+]
 
 [clean]
 paths = ["dist", "target", ".artifacts/build", ".artifacts/rust-target", ".artifacts/native-package", ".artifacts/advisory-db", ".artifacts/fixtures"]
 
-[ci]
-runner = "ubuntu-24.04"
-timeout_minutes = 30
 
 [publication]
 tag_prefix = "v"
