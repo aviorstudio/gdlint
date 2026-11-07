@@ -4,7 +4,7 @@ use serde_json::Value;
 use std::{collections::BTreeMap, path::Path, sync::LazyLock};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-pub const DEFAULTS: &str = include_str!("defaults.json");
+pub const DEFAULTS: &str = include_str!("defaults.toml");
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -21,17 +21,27 @@ pub struct Settings {
 }
 impl Config {
     pub fn load(root: &Path, path: Option<&Path>) -> Result<Self> {
-        let mut value: Value = serde_json::from_str(DEFAULTS)?;
+        let mut value = crate::source_toml::parse(DEFAULTS)?;
         match std::fs::read(
             path.map(Path::to_path_buf)
-                .unwrap_or_else(|| root.join("gdlint.json")),
+                .unwrap_or_else(|| root.join("gdlint.toml")),
         ) {
             Ok(bytes) => {
-                let supplied: Value = serde_json::from_slice(&bytes)
+                let supplied = crate::source_toml::parse(std::str::from_utf8(&bytes)?)
                     .map_err(|e| format!("invalid config file: {e}"))?;
                 merge(&mut value, supplied).map_err(|e| format!("invalid config file: {e}"))?;
             }
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound && path.is_none() => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound && path.is_none() => {
+                if !root
+                    .join("gdlint.json")
+                    .symlink_metadata()
+                    .is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound)
+                {
+                    return Err(
+                        "legacy gdlint.json requires explicit conversion to gdlint.toml; legacy JSON v1 must be converted manually; no automatic import".into(),
+                    );
+                }
+            }
             Err(e) => return Err(e.into()),
         }
         Ok(serde_json::from_value(value).map_err(|e| format!("invalid config file: {e}"))?)
@@ -259,5 +269,31 @@ impl Findings {
     }
     pub fn warnings(&self) -> usize {
         self.items[15..].iter().map(Vec::len).sum()
+    }
+}
+
+#[cfg(test)]
+mod config_tests {
+    use super::*;
+    #[test]
+    fn legacy_null_merge_semantics_remain_explicit_and_toml_preserves_empty_arrays() {
+        let mut base = crate::source_toml::parse(DEFAULTS).unwrap();
+        merge(&mut base, serde_json::json!({"ERRORS":{"print_statements":null},"warnings":null,"settings":{"ignore_patterns":null,"allowed_comment_prefixes":[null,"TODO"]},"unknown":17})).unwrap();
+        assert_eq!(base["settings"]["ignore_patterns"], serde_json::json!([]));
+        assert_eq!(
+            base["settings"]["allowed_comment_prefixes"],
+            serde_json::json!(["", "TODO"])
+        );
+        let mut value = crate::source_toml::parse(DEFAULTS).unwrap();
+        merge(
+            &mut value,
+            crate::source_toml::parse(
+                "[ERRORS]\nprint_statements = false\n[settings]\nignore_patterns = []",
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(value["errors"]["print_statements"], false);
+        assert_eq!(value["settings"]["ignore_patterns"], serde_json::json!([]));
     }
 }

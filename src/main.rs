@@ -2,6 +2,7 @@ mod analysis;
 mod display;
 mod fix;
 mod model;
+pub mod source_toml;
 use model::{Config, DEFAULTS, Result};
 use std::{
     fs::{self, OpenOptions},
@@ -23,7 +24,7 @@ struct Options {
 fn usage() -> String {
     let binary = std::env::args().next().unwrap_or_else(|| "gdlint".into());
     format!(
-        "Usage: {binary} [options]\n       {binary} init\n       {binary} version\n\nGDScript Linter - Analyzes and cleans GDScript code\n\nOptions:\n  -benchmark\n    Show performance timing\n  -debt\n    Show [TECH DEBT] comments\n  -fix\n    Remove all unused code and clean files\n  -warn\n    Show warnings in addition to errors\n\n  --json          Print one structured result without terminal control bytes\n  --config PATH   Override project-local gdlint.json\n\nCommands:\n  init           Create default gdlint.json in the current Godot project\n  version        Print version information"
+        "Usage: {binary} [options]\n       {binary} init\n       {binary} version\n\nGDScript Linter - Analyzes and cleans GDScript code\n\nOptions:\n  -benchmark\n    Show performance timing\n  -debt\n    Show [TECH DEBT] comments\n  -fix\n    Remove all unused code and clean files\n  -warn\n    Show warnings in addition to errors\n\n  --json          Print one structured result without terminal control bytes\n  --config PATH   Override project-local gdlint.toml\n\nCommands:\n  init           Create default gdlint.toml in the current Godot project\n  version        Print version information"
     )
 }
 fn options() -> Result<Option<Options>> {
@@ -128,10 +129,20 @@ fn execute(options: Options) -> Result<bool> {
     }
     let root = project().map_err(|e| format!("Error validating project root: {e}"))?;
     if options.command == "init" {
+        if options.config.is_none()
+            && !root
+                .join("gdlint.json")
+                .symlink_metadata()
+                .is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound)
+        {
+            return Err(
+                "legacy gdlint.json requires explicit conversion to gdlint.toml before init; legacy JSON v1 must be converted manually; no automatic import".into(),
+            );
+        }
         let path = options
             .config
             .clone()
-            .unwrap_or_else(|| root.join("gdlint.json"));
+            .unwrap_or_else(|| root.join("gdlint.toml"));
         let mut file = OpenOptions::new()
             .write(true)
             .create_new(true)
