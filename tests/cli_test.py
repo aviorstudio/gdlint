@@ -1,5 +1,6 @@
 """Run the CLI against disposable Godot projects, including destructive fixes."""
 import json
+from source_toml import source_text
 import os
 from pathlib import Path
 import re
@@ -29,7 +30,7 @@ class Project(unittest.TestCase):
             config['errors'].update(errors)
         if warnings is not None: config['warnings']=warnings
         if settings is not None: config['settings']=settings
-        self.put('gdlint.json',json.dumps(config))
+        self.put('gdlint.toml',source_text(config))
     def cli(self,*args,code=None):
         result=subprocess.run([str(BINARY),*args],cwd=self.root,capture_output=True,text=True,encoding='utf-8',timeout=15)
         if '--json' not in args:
@@ -48,12 +49,18 @@ class CLI(Project):
         (self.root/'project.godot').rmdir()
         self.put('project.godot','')
         self.assertIn('Created default',self.cli('init',code=0).stdout)
-        config=(self.root/'gdlint.json').read_bytes()
-        self.assertEqual(config,(Path(__file__).parents[1]/'src/defaults.json').read_bytes())
+        config=(self.root/'gdlint.toml').read_bytes()
+        self.assertEqual(config,(Path(__file__).parents[1]/'src/defaults.toml').read_bytes())
         self.assertIn('config already exists',self.cli('init',code=1).stderr)
-        self.assertEqual(config,(self.root/'gdlint.json').read_bytes())
+        self.assertEqual(config,(self.root/'gdlint.toml').read_bytes())
         self.assertIn('unknown command',self.cli('unknown',code=2).stderr)
         self.assertIn('expected at most one command',self.cli('init','version',code=2).stderr)
+    def test_legacy_v1_source_requires_manual_conversion_before_defaults_or_init(self):
+        self.put('gdlint.json', '{"errors":{"print_statements":false}}')
+        self.assertIn('JSON v1', self.cli(code=1).stderr)
+        self.assertIn('explicit conversion', self.cli('init',code=1).stderr)
+        self.assertFalse((self.root/'gdlint.toml').exists())
+
     def test_json_results_have_findings_and_no_terminal_text(self):
         self.config(dict(print_statements=True))
         self.put('main.gd','func _ready():\n\tprint("fixture")\n')
@@ -67,9 +74,9 @@ class CLI(Project):
         self.assertNotIn('print(', (self.root/'main.gd').read_text())
         self.assertEqual(json.loads(self.cli('--json','-unknown',code=2).stdout)['error']['code'],'invalid_usage')
     def test_explicit_config_override_and_machine_version_do_not_need_user_config(self):
-        self.put('custom.json',json.dumps({'errors':{'print_statements':False}}))
+        self.put('custom.toml',source_text({'errors':{'print_statements':False}}))
         self.put('main.gd','func _ready():\n\tprint("fixture")\n')
-        self.assertTrue(json.loads(self.cli('--json','--config','custom.json',code=0).stdout)['ok'])
+        self.assertTrue(json.loads(self.cli('--json','--config','custom.toml',code=0).stdout)['ok'])
         (self.root/'project.godot').unlink()
         for version in ['version','--version']:
             self.assertIn('version',json.loads(self.cli('--json',version,code=0).stdout)['result'])
@@ -164,13 +171,13 @@ class CLI(Project):
         self.assertIn('build/generated.gd:1: generated debt',output)
         for name,text in files.items(): self.assertEqual((self.root/name).read_text(),text)
     def test_config_partial_null_unknown_and_invalid_types(self):
-        self.put('gdlint.json','{"errors":{"print_statements":null},"warnings":null,"settings":{"ignore_patterns":null},"unknown":17}')
+        self.put('gdlint.toml','unknown = 17\n[settings]\nignore_patterns = []\n')
         self.put('print.gd','func _ready():\n\tprint(1)\n')
         self.assertIn('Print statements: 1',self.cli(code=1).stdout)
-        for value in ['{malformed','[]','{"errors":{"print_statements":"yes"}}','{"settings":{"ignore_patterns":[1]}}']:
-            self.put('gdlint.json',value)
+        for value in ['{malformed','[]','[errors]\nprint_statements = "yes"','[settings]\nignore_patterns = [1]']:
+            self.put('gdlint.toml',value)
             self.assertIn('invalid config file',self.cli(code=1).stderr)
-        self.put('gdlint.json','{"errors":{"print_statements":false}}')
+        self.put('gdlint.toml','[errors]\nprint_statements = false')
         self.assertIn('codebase is clean',self.cli(code=0).stdout)
     def test_warnings_are_counted_when_hidden_and_detailed_when_requested(self):
         self.config(dict(),dict(single_use_functions=True,empty_functions=True))

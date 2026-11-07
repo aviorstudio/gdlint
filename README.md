@@ -1,4 +1,4 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 1b696ec8337ddabe32c7831bee500c4c381d0740a623eceeff234f0ea8118bc3 -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: fed582ad8930993dccb6aa78a2aba34f3c6a203ba6af33fc433c4c36023115b2 -->
 
 # gdlint
 
@@ -35,7 +35,7 @@ gdlint
 
 The current directory must contain `project.godot`.
 
-`gdlint` loads `./gdlint.json` when present. If no config exists, it uses mild generic defaults.
+`gdlint` loads `./gdlint.toml` when present. If no config exists, it uses mild generic defaults.
 
 ## Rule Ownership
 
@@ -71,7 +71,17 @@ Create a config in the current Godot project:
 gdlint init
 ```
 
-This writes `./gdlint.json` and fails if the file already exists.
+This writes `./gdlint.toml` and fails if the file already exists.
+
+Current-source builds read and initialize TOML only. A legacy `gdlint.json` is refused when no canonical source exists; convert it explicitly before running or initializing. Published binaries retain their released interface. Omit an override to inherit its default, use `false` to disable a rule and `[]` to clear a pattern list.
+
+```toml
+[errors]
+print_statements = false
+
+[settings]
+ignore_patterns = []
+```
 
 Config sections:
 
@@ -81,6 +91,10 @@ Config sections:
 - `settings.ignore_patterns`: files skipped by all rules
 - `settings.unused_ignore_patterns`: files skipped only by unused-code rules
 - `settings.variant_ignore_patterns`: files skipped only by explicit `Variant` checks
+
+Current-source migration is manual: create the named TOML source with the same effective settings and archive the legacy JSON v1 source outside the active configuration directory. No automatic import command is provided. Preserve explicit `false`, zero and empty arrays; omit null overrides only where they meant inheritance or defaults. Do not copy credentials into tracked source files. Existing installed settings are not migrated by a source update.
+
+For JSON v1 conversion, a null pattern list becomes `[]`; a null boolean or table override is omitted. A null element of a string pattern list becomes `""`. These differ from leaving a pattern-list override absent.
 
 ## Flags
 
@@ -127,4 +141,4 @@ The verified executable is `.artifacts/build/gdlint` (`gdlint.exe` on Windows). 
 
 Use `gdlint --json` for structured findings, `gdlint --json -fix` for a verified fix result, and `gdlint --json version` for build identity. Machine stdout contains one JSON document without terminal control bytes. Diagnostics use stderr. Errors in the project and unresolved fixes exit 1; invalid command syntax exits 2; help/version succeed.
 
-Configuration defaults to `gdlint.json` in the Godot project root. `--config FILE` selects an explicit file; an explicitly missing file fails. Project settings stay with the project rather than user-global configuration.
+Configuration defaults to `gdlint.toml` in the Godot project root. `--config FILE` selects an explicit file; an explicitly missing file fails. Project settings stay with the project rather than user-global configuration.

@@ -34,9 +34,9 @@ with tempfile.TemporaryDirectory() as directory:
     marker.rmdir()
     marker.write_text('[application]\nconfig/name="Disposable CLI fixture"\n')
     run(binary, project, ['init'], message='Created default configuration')
-    config = project / 'gdlint.json'
+    config = project / 'gdlint.toml'
     original = config.read_bytes()
-    assert isinstance(json.loads(original), dict) and json.loads(original)
+    assert isinstance(tomllib.loads(original.decode()), dict) and tomllib.loads(original.decode())
     run(binary, project, ['init'], False, 'config already exists')
     assert config.read_bytes() == original
     run(binary, project, [])
