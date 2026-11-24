@@ -89,3 +89,6 @@ initial = "bump"
 version_identity = "number"
 validation_timeout = 30
 acceptance_timeout = 30
+
+[ci]
+single_job = true
